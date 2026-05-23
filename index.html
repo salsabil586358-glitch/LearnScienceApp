@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🧠 ادرس بذكاء v2</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --font: 'IBM Plex Sans Arabic', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      /* Light */
+      --bg: #f0eeff;
+      --surface: #ffffff;
+      --surface2: #f7f5ff;
+      --border: #e2daf7;
+      --border2: #ccc3f0;
+      --primary: #6c5ce7;
+      --primary2: #a29bfe;
+      --accent: #fd79a8;
+      --green: #00b894;
+      --amber: #fdcb6e;
+      --red: #e17055;
+      --text: #1e1b2e;
+      --textsub: #6e6a8a;
+      --textmute: #b2aed0;
+      --shadow: 0 4px 24px rgba(108,92,231,0.10);
+      --shadow2: 0 8px 40px rgba(108,92,231,0.16);
+      --glow: 0 0 0 3px rgba(108,92,231,0.18);
+      --card-bg: #fff;
+      --badge-easy: #d4fde8;
+      --badge-easy-t: #00704a;
+      --badge-hard: #ffe5e5;
+      --badge-hard-t: #c0392b;
+      --badge-ok: #edeaff;
+      --badge-ok-t: #5340d6;
+    }
+    [data-theme="dark"] {
+      --bg: #0f0e17;
+      --surface: #1a1827;
+      --surface2: #211f33;
+      --border: #2e2b45;
+      --border2: #3d3960;
+      --primary: #a29bfe;
+      --primary2: #6c5ce7;
+      --accent: #fd79a8;
+      --green: #00cec9;
+      --amber: #fdcb6e;
+      --red: #e17055;
+      --text: #f0eeff;
+      --textsub: #b2aed0;
+      --textmute: #5a5880;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --shadow2: 0 8px 40px rgba(0,0,0,0.55);
+      --glow: 0 0 0 3px rgba(162,155,254,0.22);
+      --card-bg: #1a1827;
+      --badge-easy: #0b2e20;
+      --badge-easy-t: #00cec9;
+      --badge-hard: #2e1515;
+      --badge-hard-t: #e17055;
+      --badge-ok: #1e1b38;
+      --badge-ok-t: #a29bfe;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); font-family: var(--font); color: var(--text); transition: background 0.3s, color 0.3s; }
+    textarea:focus, input:focus { outline: none; border-color: var(--primary) !important; box-shadow: var(--glow); }
+    textarea, input { transition: border-color 0.2s, box-shadow 0.2s; }
+    button { cursor: pointer; font-family: var(--font); }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+    @keyframes shimmer { 0%{background-position:200%} 100%{background-position:-200%} }
+    @keyframes cardFlip { from{transform:rotateY(90deg);opacity:0} to{transform:none;opacity:1} }
+    @keyframes pop { 0%{transform:scale(0.8);opacity:0} 60%{transform:scale(1.06)} 100%{transform:scale(1);opacity:1} }
+    @keyframes slideIn { from{transform:translateX(40px);opacity:0} to{opacity:1;transform:none} }
+    @keyframes glow-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(108,92,231,0)} 50%{box-shadow:0 0 0 8px rgba(108,92,231,0.13)} }
+    .fade-up { animation: fadeUp 0.35s ease both; }
+    .pop { animation: pop 0.4s cubic-bezier(.34,1.56,.64,1) both; }
+    .card-anim { animation: cardFlip 0.32s ease both; }
+    .slide-in { animation: slideIn 0.3s ease both; }
+    .toast-anim { animation: pop 0.35s ease both; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const _jsxFileName = ""; function _optionalChain(ops) { let lastAccessLHS = undefined; let value = ops[0]; let i = 1; while (i < ops.length) { const op = ops[i]; const fn = ops[i + 1]; i += 2; if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) { return undefined; } if (op === 'access' || op === 'optionalAccess') { lastAccessLHS = value; value = fn(value); } else if (op === 'call' || op === 'optionalCall') { value = fn((...args) => value.call(lastAccessLHS, ...args)); lastAccessLHS = undefined; } } return value; }
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+const STORAGE_KEY = "studysmart_v2";
+const MAX_DAILY = 50;
+
+// ─── SM-2 ───────────────────────────────────────────────────────────────────
+function sm2(card, quality) {
+  let { easeFactor, interval, repetitions } = card;
+  if (quality >= 3) {
+    if (repetitions === 0) interval = 1;
+    else if (repetitions === 1) interval = 6;
+    else interval = Math.round(interval * easeFactor);
+    repetitions += 1;
+    easeFactor = Math.max(1.3, easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+  } else { repetitions = 0; interval = 1; }
+  return { ...card, easeFactor, interval, repetitions, nextReview: Date.now() + interval * 86400000, lastReviewed: Date.now() };
+}
+
+function mk(id, front, back) {
+  return { id, front, back, interval:1, easeFactor:2.5, nextReview:Date.now(), repetitions:0, lastReviewed:null };
+}
+
+function dayKey(ts) { return new Date(ts).toISOString().slice(0,10); }
+
+// ─── SEED DATA ───────────────────────────────────────────────────────────────
+const SEED_DECKS = [
+  { id:"mis1", title:"Make It Stick — أوهام التعلم", emoji:"🪞", color:"#6c5ce7", desc:"لماذا أكثر ما نفعله خاطئ — والدليل العلمي", cards:[
+    mk("mi1","لماذا إعادة القراءة المتكررة وهم وليس تعلماً؟","الألفة المتزايدة مع النص تُشعرك بالإتقان — لكنها Fluency Illusion. دراسات واشنطن: قراءة النص مرتين متتاليتين لا تُنتج فائدة مقارنة بقراءته مرة واحدة. تُفعّل مسار التعرّف (Recognition) لا مسار الاسترجاع (Recall)."),
+    mk("mi2","ما هو Massed Practice ولماذا مكاسبه وهمية؟","Massed Practice = تكثيف التدريب في جلسة واحدة طويلة. يُنتج تقدماً سريعاً مرئياً. لكن المجموعة التي كرّست وقتها للاسترجاع نسيت 13% بعد يومين، بينما نسيت مجموعة التكثيف 50%."),
+    mk("mi3","ما دليل تجربة Tulving على عجز التكرار المجرّد؟","Tulving: مجموعة قرأت قوائم 6 مرات، ومجموعة لم تتعرض لها ثم تعلّمتها مرة — النتائج متماثلة! التكرار المجرّد بلا استرجاع = صفر فائدة للذاكرة طويلة المدى."),
+    mk("mi4","ما تجربة النقود (Penny Test) وماذا تكشف؟","طُلب من الناس تحديد الصورة الصحيحة لعملة بنس من 12 صورة رغم أنهم يرونها يومياً — معظمهم فشلوا. التعرض المتكرر بلا انتباه نشط = لا يُبني ذاكرة حقيقية."),
+    mk("mi5","ما هو Fluency Illusion وكيف يُضلّل الطلاب؟","حين تقرأ نصاً واضحاً يُرسل الدماغ إشارة 'أعرف هذا'. لكن سهولة القراءة لا تعني فهم المفاهيم. الطالب يُفاجأ في الاختبار لأنه اعتاد على التعرّف لا الاسترجاع."),
+    mk("mi6","ما هو وهم Learning Styles وما موقف البحث؟","البحث الإمبريقي لا يدعم فكرة تطابق أسلوب التعلم. الأفضل: أنواع متعددة من التمثيل لأي شخص. تحديد نفسك بـ 'بصري' يُقيّد تعلمك."),
+    mk("mi7","لماذا الطالب المجتهد قد يرسب رغم ساعات الدراسة؟","سلّط وأعاد القراءة حتى شعر بالإتقان — ثم رسب. لم يختبر نفسه. الساعات لا تُقاس بعددها بل بجودة الاسترجاع فيها."),
+    mk("mi8","لماذا التعلم السهل يساوي التعلم الضعيف؟","Desirable Difficulty = الصعوبة المُنتجة. الدماغ يُعالج المعلومة بجهد أكبر في مواجهة المقاومة. الراحة الآنية = إنذار بضعف الاحتفاظ لاحقاً."),
+  ]},
+  { id:"mis2", title:"Make It Stick — قوة الاسترجاع", emoji:"🎯", color:"#6c5ce7", desc:"Testing Effect: أقوى أداة تعلم مُثبتة علمياً", cards:[
+    mk("mr1","ما هو Testing Effect وما أول إثبات علمي له؟","دراسة 1917: أطفال الذين أمضوا 60% من وقت الدراسة في الاسترجاع الصامت تفوّقوا. دراسة 1939 على 3000 طالب: بعد الاختبار الأول توقّف النسيان تقريباً."),
+    mk("mr2","ماذا كشفت دراسة Roediger & Karpicke 2006؟","مجموعة A: قرأت 4 مرات. مجموعة B: قرأت مرة ثم اختبرت 3 مرات. بعد أسبوع: B تفوقت بـ 50%. الاختبار المتكرر يتفوق على القراءة المتكررة بفارق هائل."),
+    mk("mr3","ما نتائج تجربة Columbia Middle School؟","اختبارات قصيرة لمدة 3 فصول: الطلاب سجّلوا درجة كاملة أعلى على المادة المُختبَرة. المادة المُعادة كجمل مراجعة لم تُظهر أي تحسن."),
+    mk("mr4","ما نتائج دراسة الصف الثامن في علم الأحياء؟","79% على المادة غير المُختبَرة مقابل 92% على المادة المُختبَرة. الفارق بقي بعد 8 أشهر. الاختبار يبني ذاكرة تدوم أشهراً."),
+    mk("mr5","كيف يختلف Short-Answer عن Multiple Choice؟","Short-Answer: يُجبر على استرجاع كامل (الأقوى). Multiple Choice: يُجبر على التعرّف فقط. لكن حتى Multiple Choice أفضل بكثير من إعادة القراءة."),
+    mk("mr6","كيف يحمي الاختبار المتكرر من النسيان؟","طلاب اختُبروا 3 مرات فوراً: نسيان صفر بعد أسبوع (53% كيوم الاختبار) مقارنة بـ 28% لمن اختُبروا مرة واحدة."),
+    mk("mr7","ما دور التغذية الراجعة المتأخرة؟","تأخير التغذية الراجعة قليلاً أفضل من الفورية للذاكرة طويلة الأمد. يُجبر على محاولة التذكر ذاتياً أولاً — مما يُقوّي المسار العصبي."),
+    mk("mr8","كيف يُحسّن الاختبار دقة Metacognition؟","الطلاب الذين يختبرون أنفسهم لديهم تقدير أدق لمعرفتهم. يعرفون ما يعرفون وما لا يعرفون — ويُخصّصون وقتهم على الثغرات الحقيقية."),
+  ]},
+  { id:"mis3", title:"Make It Stick — التباعد والتنويع", emoji:"📅", color:"#6c5ce7", desc:"Spaced Practice & Interleaving", cards:[
+    mk("ms1","ما تجربة أطباء الجراحة الدقيقة؟","38 طبيباً: نصفهم في يوم واحد، النصف بفاصل أسبوع. بعد شهر: مجموعة التباعد تفوقت في وقت العملية وعدد الحركات ونجاح الربط."),
+    mk("ms2","ما تجربة رمي الكيس (Beanbag)؟","أطفال 8 سنوات: مجموعة تدربت على هدف 3 أقدام، أخرى على 2 و4 فقط. اختُبروا على 3 أقدام — الفائزون: الذين لم يتدربوا عليها قط! التنويع بنى مهارة أعمق."),
+    mk("ms3","لماذا Interleaving يُحسّن الفهم العميق؟","يُجبر الدماغ على: 'أيّ أسلوب يناسب هذه المشكلة؟' بدل 'ما الإجابة؟'. يحاكي الاختبار الحقيقي حيث لا Cue."),
+    mk("ms4","ما هو Blocked Practice وكيف يُوهمك؟","Blocked Practice: تنتقل من محطة لمحطة بتسلسل ثابت. يُعطي وهم التنوع لكنه تكرار منظّم. بطاقاتك بنفس الترتيب دائماً = Blocked."),
+    mk("ms5","ما دور التأمل كشكل من Retrieval Practice؟","التأمل في تجربة = استرجاع + توسيع. يُقوّي الذاكرة ويُحسّن الأداء المستقبلي. الفرق بين من يتعلم من التجربة ومن لا: عادة التأمل."),
+    mk("ms6","لماذا جلسات التباعد تبدو أقل فاعلية رغم أنها أفضل؟","بعض النسيان حدث — وتحتاج جهداً أكبر للاسترجاع. هذا الجهد هو ما يُقوّي الذاكرة. الإحساس بالتعلم وكفاءته أحياناً عكسيان."),
+    mk("ms7","كيف طبّق Andrew Sobel التباعد في محاضراته؟","استبدل الاختبار النصفي والنهائي بـ 9 اختبارات موزعة. النتائج: جودة النقاشات ارتفعت، الكتابة تحسّنت، الحضور ارتفع."),
+    mk("ms8","لماذا Varied Practice يبني مهارة التكيّف؟","كل بيئة حقيقية مختلفة عن التدريب. Varied Practice يبني Schema أوسع. كل اختبار طيارين في المحاكي يختلف عن الآخر: لبناء قدرة التكيف."),
+  ]},
+  { id:"mis4", title:"Make It Stick — الفهم العميق", emoji:"🧩", color:"#6c5ce7", desc:"Elaboration, Prior Knowledge, Mental Models", cards:[
+    mk("me1","ما هو Elaboration وكيف يُبني الذاكرة؟","Elaboration = إعطاء المعلومة الجديدة معنىً بربطها بما تعرفه. كلما أكثرت من هذه الروابط كلما كانت الذاكرة أقوى."),
+    mk("me2","كيف يُبني Prior Knowledge قدرة الاستيعاب؟","كل تعلم جديد يُبنى على أساس من المعرفة السابقة. كلما اتسعت معرفتك كلما استطعت استيعاب أكثر. المعرفة تُولّد قدرة استيعاب معرفة أكثر."),
+    mk("me3","ما هو Mental Model وكيف يُميّز الخبير؟","Mental Model = تمثيل ذهني لكيفية عمل شيء. الخبير يملك نماذج لكل نوع يتعرف عليها في أجزاء من الثانية. بناء النماذج الذهنية = التعلم العميق."),
+    mk("me4","كيف تُعمّق Elaboration فهمك؟","اسأل 'لماذا هذا صحيح؟' و'كيف يرتبط بما أعرفه؟' و'ما مثال من حياتي؟'. أعد صياغة المفهوم بكلماتك. قاعدة: لا تنتهِ من فقرة قبل ربطها بشيء تعرفه."),
+    mk("me5","ما هو Generation Effect؟","ذاكرة أقوى حين تُولّد الإجابة بنفسك. تطبيقات: اقرأ العنوان وتوقّع المحتوى. حل المسألة قبل النظر للحل. حتى الخطأ يُثبّت الإجابة الصحيحة."),
+    mk("me6","كيف يبني الدماغ ذاكرة أقوى عبر القصص؟","نتذكر القصص أفضل من الحقائق المجردة. حوّل الحقائق الجافة لقصص. اربط المفاهيم بأشخاص وأحداث. السردية = الشكل الطبيعي للذاكرة."),
+    mk("me7","ما هو Concrete Examples للمجردات؟","زاوية الحركة: المثال المجرد صعب. لكن الراقصة التي تُقرّب ذراعيها وتتسارع = مثال ملموس. الدماغ يفهم المجرد عبر المحسوس."),
+    mk("me8","ما الفرق الجوهري بين المعرفة والإبداع؟","الإبداع بلا معرفة يبني على رمال. كلما كانت معرفتك بموضوع أعمق كلما كان إبداعك أكثر دقة وتأثيراً."),
+  ]},
+  { id:"mis5", title:"Make It Stick — الوعي والتطور", emoji:"🔍", color:"#6c5ce7", desc:"Metacognition, Growth Mindset, Calibration", cards:[
+    mk("mc1","ما هو System 1 vs System 2 في التعلم؟","System 1: سريع تلقائي. System 2: بطيء واعٍ تحليلي. الخطر: System 1 يُقنعك بأنك تعرف. يجب أن يُراقب System 2 — كالطيار الذي يُراجع أجهزة القياس."),
+    mk("mc2","ما هو Motivated Reasoning؟","الناس عباقرة في إقناع أنفسهم بما يريدون تصديقه. في التعلم: تُقنع نفسك بأنك 'تعرف' لأن القراءة مألوفة. الاختبار المنتظم هو الأداة الوحيدة لكسر هذا الوهم."),
+    mk("mc3","ما هو Growth Mindset بالمعنى الأعمق؟","كل مرة تتعلم شيئاً جديداً تغيّر دماغك جسدياً. الفشل = معلومات عن مكان الضعف. المتعلمون المتميزون ينظرون للتحدي كفرصة."),
+    mk("mc4","ما هو Neuroplasticity؟","الدماغ يُعيد تشكيل نفسه جسدياً مدى الحياة. London cab drivers لديهم Hippocampus أكبر. الموهبة الفطرية = نقطة البداية فقط."),
+    mk("mc5","ما هي Reflection كعادة يومية؟","بعد كل تجربة: ما حدث؟ ما نجح؟ ما فشل؟ ماذا سأفعل بشكل مختلف؟ الفرق بين المحترفين الذين يتطورون والذين يبقون: عادة التأمل."),
+    mk("mc6","ما هو Calibration وكيف تُحسّنه؟","Calibration = دقة تقييمك لما تعرفه. الاختبار المنتظم يكشف الفجوات الحقيقية بين ما تعتقده وما تعرفه فعلاً."),
+    mk("mc7","كيف تُحوّل أي دراسة لـ Self-Testing؟","(1) أغلق الكتاب ودوّن ما تتذكره. (2) حوّل العناوين لأسئلة. (3) اشرح بصوت عالٍ. (4) أجب على أسئلة الفصل قبل دراسته. (5) علّم أحداً."),
+    mk("mc8","ما دور Overconfidence في إعاقة التعلم؟","الثقة الزائدة تُوقف الدراسة مبكراً. من يختبر نفسه منتظماً لديهم تقدير أدق = يدرسون ما يحتاجونه فعلاً."),
+  ]},
+  { id:"amfn1", title:"A Mind for Numbers — علم الأعصاب", emoji:"🧠", color:"#e84393", desc:"كيف يعمل دماغك فعلاً في التعلم", cards:[
+    mk("ab1","كيف وصفت أوكلي Focused Mode؟","Focused Mode كـ Pinball ضيق: ترتد بين عوازم قريبة — تتبع مسارات مألوفة. قوي لحل مسائل معروفة. لكن يعيقك إذا الحل يحتاج مسارات بعيدة."),
+    mk("ab2","كيف وصفت الـ Diffuse Mode؟","Diffuse Mode كـ Pinball واسع: الفكرة تنطلق بحرية. يحدث في الراحة والنوم والمشي. أكبر الاختراقات جاءت في هذا الوضع. كلاهما ضروري ولا يمكن تفعيلهما معاً."),
+    mk("ab3","كيف استغل إديسون ودالي الـ Diffuse Mode؟","إديسون: يجلس ممسكاً كرات معدنية — حين يغفو تسقط وتُوقظه. يُسجّل أفكاره فوراً. دالي: نفس الأسلوب. كلاهما استخدم عتبة النوم للوصول للـ Diffuse Mode."),
+    mk("ab4","ما هو Working Memory وحدوده؟","ذاكرة العمل تتسع لـ ~4 عناصر (ليس 7). عندما تُتقن مفهوماً يتحول من 4 عناصر لـ Chunk واحد — مُفرّراً مساحة لمشاكل أعقد."),
+    mk("ab5","ما هو Hippocampus ودوره؟","Hippocampus = مركز تشكيل الذكريات الجديدة. أثناء النوم ينقلها للـ Neocortex للتخزين. النوم الكافي شرط لهذا النقل."),
+    mk("ab6","ما هو Basal Ganglia؟","يتولى المهارات التلقائية. حين تُتقن مهارة تنتقل من Prefrontal Cortex (بطيء) إلى Basal Ganglia (سريع). الإتقان الحقيقي = نقل المهارة هناك."),
+    mk("ab7","كيف يختلف دماغ الخبير عن المبتدئ؟","tصوير fMRI: المبتدئ يستخدم Prefrontal Cortex بشكل مكثف. الخبير يستخدم مساحة أصغر لأن المهارة صارت تلقائية."),
+    mk("ab8","ما هو BDNF وعلاقته بالتعلم؟","BDNF = 'سماد الدماغ'. التمرين يُنتجه. 20 دقيقة مشي قبل الدراسة تُحسّن الاحتفاظ. وقت الدراسة قبل النوم + تمرين صباحاً = مزيج قوي."),
+  ]},
+  { id:"amfn2", title:"A Mind for Numbers — الأدوات العملية", emoji:"🛠️", color:"#e84393", desc:"تقنيات موثّقة لتحسين التعلم", cards:[
+    mk("at1","ما الخطوات الأربع لبناء Chunk قوي؟","(1) فهم الفكرة الأساسية. (2) تدريب الخطوات حتى تصبح تلقائية. (3) رؤية كيف يتناسب مع الصورة الأكبر. (4) معرفة متى وأين تُطبّق."),
+    mk("at2","لماذا يجب أن تحل المسائل بنفسك؟","النظر للحل ثم 'أفهم' = وهم. الحل لم يدخل دماغك — دخل عينيك. لبناء Chunk حقيقي يجب المرور بعملية التفكير بما فيها الأخطاء."),
+    mk("at3","ما هي تقنية Recall بعد القراءة؟","بعد قراءة فقرة: أغلق الكتاب. دوّن أو قل كل ما تتذكره. لا تنظر حتى تنتهي. ثم قارن. أقوى من التسطير بفارق كبير."),
+    mk("at4","كيف تستخدم Hard Start Jump to Easy في الاختبارات؟","ابدأ بأصعب سؤال لدقيقتين ← انتقل لسهل ← عُد للصعب. أثناء حلك للسهل دماغك يواصل العمل على الصعب في Diffuse Mode."),
+    mk("at5","ما هي Memory Palace؟","تخيّل مكاناً تعرفه جيداً. ضع كل معلومة في نقطة كصورة بصرية غريبة. لتتذكر: تخيّل أنك تمشي وتلتقط الصور."),
+    mk("at6","كيف تستخدم Pomodoro لمحاربة التسويف؟","25 دقيقة تركيز ← 5 دقائق راحة فعلية. Pomodoro يحوّل التركيز للعملية فقط: 'مجرد 25 دقيقة'. المكافأة بعد كل جلسة تبني عادة التركيز."),
+    mk("at7","لماذا شرح المفهوم لآخر أقوى؟","يُجبرك على تنظيم المعلومة + اكتشاف الثغرات + الاستجابة لأسئلة غير متوقعة. Protégé Effect: حتى تخيّل التعليم يُحسّن التعلم."),
+    mk("at8","ما نظام مراجعة الملاحظات المثالي؟","أعِد كتابة ملاحظاتك في نفس المساء: يُعيد تنشيط الـ Chunks + يكشف الثغرات + يبدأ التوطيد الليلي."),
+  ]},
+  { id:"ul1", title:"Ultralearning — المبادئ التسعة", emoji:"⚡", color:"#00b894", desc:"الإطار الكامل للتعلم الاستثنائي", cards:[
+    mk("up1","ما هو Metalearning؟","الخريطة قبل الرحلة. اسأل: Why — What — How. Scott: 10% من وقت المشروع للبحث = يوفّر 30-50% من وقت التنفيذ."),
+    mk("up2","ما هو مبدأ Focus والتحدي فيه؟","ليس مجرد الجلوس — بل الدخول في تركيز عميق. ثلاث مشاكل: الفشل في البدء، الفشل في الاستمرار، تدني جودة التركيز. 90 دقيقة عميقة > 4 ساعات مشتتة."),
+    mk("up3","ما هو مبدأ Directness؟","تعلّم المهارة في سياقها الحقيقي. لتتعلم التحدث بلغة = تحدث من اليوم الأول. Transfer من الدراسة النظرية للواقع نادراً ما يحدث تلقائياً."),
+    mk("up4","ما هو مبدأ Drill وكيف تُحدد Rate-Limiting Step؟","(1) مارس المهارة كاملة. (2) حدّد أين تتوقف. (3) اعزل هذا الجزء. (4) دربه مكثّفاً. (5) أعد دمجه. Rate-Limiting Step = الجزء الأضعف الذي يُحدد سقف أدائك."),
+    mk("up5","ما هو مبدأ Retrieval في Ultralearning؟","Scott في MIT: بعد مشاهدة المحاضرة، أغلق الكمبيوتر وحاول تذكّر كل شيء. 'هذه الصعوبة هي التعلم نفسه.'"),
+    mk("up6","ما هو مبدأ Feedback وما الأنواع الثلاثة؟","(1) Outcome: هل نجحت؟ (أضعف). (2) Informational: أين أخطأت؟ (متوسط). (3) Corrective: كيف تُصحح بالضبط؟ (الأقوى)."),
+    mk("up7","ما هو مبدأ Retention؟","(1) Spaced Repetition. (2) Proceduralization. (3) Overlearning: استمر بعد الإتقان الأولي. الثلاث معاً = ذاكرة تُقاوم الزمن."),
+    mk("up8","ما هو مبدأ Intuition؟","الحدس يُبنى بتعرّض واسع مع تغذية راجعة. Feynman بنى حدسه بحل مئات المسائل رافضاً النظر للحل. الحدس = تعرّض واسع + صدق تام مع النفس."),
+  ]},
+  { id:"sci", title:"علم التعلم — المعمّق", emoji:"🔬", color:"#fdcb6e", desc:"أبحاث علم الأعصاب وعلم النفس", cards:[
+    mk("sd1","ما هو Forgetting Curve لـ Ebbinghaus؟","Ebbinghaus: 50% نسيان خلال ساعة، 70% خلال يوم، 90% خلال أسبوع. لكن كل مراجعة تُحوّل المنحنى للأعلى. Spaced Repetition مُصمَّم للمراجعة عند نقطة النسيان الأمثل."),
+    mk("sd2","ما هو Contextual Interference Effect؟","لاعبو جولف: مجموعة A من نفس المسافة، B من مسافات مختلفة. اختبار: B تفوّقت. التداخل في التدريب = تميّز في الأداء الحقيقي."),
+    mk("sd3","ما هو Spacing Effect ومدى ثباته؟","اكتشفه Ebbinghaus 1885. 140 سنة من البحث تؤكده. معظم الطلاب يتجاهلونه لصالح التكثيف الليلي."),
+    mk("sd4","ما هو Self-Explanation Effect؟","شرح ما تقرأه لنفسك خطوة بخطوة أثناء القراءة. طلاب شرحوا خطوات حل مسائل الفيزياء تعلّموا أعمق وأسرع."),
+    mk("sd5","ما هو Pretesting Effect؟","اختبار نفسك قبل دراسة المادة حتى لو أخطأت. الفشل في الـ Pretest يُنبّه الدماغ ويجعله أكثر تقبلاً للمعلومة الصحيحة."),
+    mk("sd6","ما هو Elaborative Interrogation؟","توليد تفسيرات لـ 'لماذا هذه الحقيقة صحيحة؟'. طلاب سُئلوا 'لماذا؟' تفوّقوا بفارق 50-70%."),
+    mk("sd7","ما هو Teaching Effect؟","حين تعلم شخصاً تتعلم أنت أكثر. Protégé Effect: حتى تخيّل التعليم يُحسّن التعلم بدون تعليم فعلي."),
+    mk("sd8","ما هو Sleep Consolidation؟","أثناء النوم NREM: ينقل من Hippocampus للـ Neocortex. أثناء REM: يربط بالمعرفة القديمة. المجموعة التي نامت بعد التعلم: أداء أفضل بـ 20-30%."),
+  ]},
+  { id:"apply", title:"التطبيق والإتقان", emoji:"🚀", color:"#a29bfe", desc:"كيف تُصمّم حياتك كمتعلم منهجي", cards:[
+    mk("aa1","كيف تُصمّم مشروع تعلم 3 أشهر؟","أسبوع 1-2: Metalearning. أسبوع 3-6: مكثف (Directness + Drill + Feedback). أسبوع 7-10: توطيد (Retrieval + SRS). أسبوع 11-12: تعميق + Overlearning."),
+    mk("aa2","ما الجدول الأمثل للـ SRS يومياً؟","الصباح: راجع بطاقات اليوم. خلال اليوم: أضف بطاقات جديدة. المساء: بطاقات فائتة. القاعدة: يوم بدون مراجعة يُضيع جزءاً من العمل التراكمي."),
+    mk("aa3","ما هو نظام Cornell Notes؟","قسّم الصفحة: عمود ضيق = أسئلة. عمود واسع = ملاحظاتك. أسفل = ملخص. غطِّ الأيمن ← أجب على أسئلة الأيسر. يُحوّل الملاحظات لأداة استرجاع."),
+    mk("aa4","كيف تُقيّم هل تتعلم فعلاً؟","مؤشرات التعلم: تشرح بكلماتك + تُطبّق في سياق مختلف + تسترجع بعد أسبوع. مؤشرات الوهم: تشعر بالراحة مع المادة لكن تُخفق في التطبيق."),
+    mk("aa5","ما الأخطاء الشائعة في الـ SRS؟","(1) بطاقات بلا فهم. (2) بطاقات ضخمة. (3) مراجعة غير منتظمة. (4) حفظ بلا تطبيق. (5) تراكم البطاقات. راجع يومياً ولو 5 دقائق."),
+    mk("aa6","كيف تبني عادة التعلم اليومي؟","(1) ربط بعادة موجودة. (2) ابدأ بـ 10 دقائق يومياً. (3) تتبع السلسلة. (4) بيئة تُسهّل. 10 دقائق × 365 = 60+ ساعة سنوياً."),
+    mk("aa7","ما الفرق بين متعلم يطبّق المبادئ ومن لا؟","التقليدي: 3 ساعات → 20% بعد أسبوع. المنهجي: ساعة → 80% بعد شهر. الفرق = ×4 كفاءة."),
+    mk("aa8","ما الـ Learning Stack الأمثل؟","يومياً: SRS (15 دقيقة) + ممارسة مباشرة (45-90 دقيقة). أسبوعياً: مراجعة + Drill على أضعف نقطة. شهرياً: تقييم + تعديل المسار."),
+  ]},
+];
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+function saveAll(state) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) { console.warn("Save failed", e); }
+}
+
+function loadAll() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e2) { return null; }
+}
+
+function mergeDecks(saved) {
+  if (!saved) return SEED_DECKS;
+  const savedDecks = saved.decks || saved; // support both old and new format
+  const seedIds = new Set(SEED_DECKS.map(d=>d.id));
+  const customDecks = (Array.isArray(savedDecks) ? savedDecks : []).filter(d=>!seedIds.has(d.id));
+  return [
+    ...SEED_DECKS.map(deck => {
+      const sd = (Array.isArray(savedDecks) ? savedDecks : []).find(d=>d.id===deck.id);
+      if (!sd) return deck;
+      return { ...deck, cards: deck.cards.map(c => {
+        const sc = (sd.cards||[]).find(x=>x.id===c.id);
+        return sc ? { ...c, ...sc } : c;
+      }).concat((sd.cards||[]).filter(c=>!deck.cards.some(x=>x.id===c.id))) };
+    }),
+    ...customDecks
+  ];
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function getStreak(history) {
+  if (!history || !history.length) return 0;
+  const today = dayKey(Date.now());
+  const yesterday = dayKey(Date.now() - 86400000);
+  const days = [...new Set(history.map(h => dayKey(h)))].sort().reverse();
+  if (days[0] !== today && days[0] !== yesterday) return 0;
+  let streak = 0;
+  let expected = days[0] === today ? today : yesterday;
+  for (const d of days) {
+    if (d === expected) { streak++; expected = dayKey(new Date(expected).getTime() - 86400000); }
+    else break;
+  }
+  return streak;
+}
+
+function getDueCards(decks, limit=MAX_DAILY) {
+  const now = Date.now();
+  return decks.flatMap(d => d.cards.filter(c=>c.nextReview<=now).map(c=>({...c,deckId:d.id,deckTitle:d.title,deckEmoji:d.emoji}))).slice(0,limit);
+}
+
+function nextReviewLabel(ts) {
+  const diff = ts - Date.now();
+  if (diff <= 0) return "الآن";
+  const mins = Math.floor(diff/60000);
+  const hours = Math.floor(diff/3600000);
+  const days = Math.floor(diff/86400000);
+  if (mins < 60) return `${mins} دقيقة`;
+  if (hours < 24) return `${hours} ساعة`;
+  return `${days} يوم`;
+}
+
+// ─── THEME HOOK ──────────────────────────────────────────────────────────────
+function useTheme() {
+  const [dark, setDark] = useState(() => {
+    try { return localStorage.getItem("theme_v2") === "dark"; } catch (e3) { return false; }
+  });
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    try { localStorage.setItem("theme_v2", dark ? "dark" : "light"); } catch (e4) {}
+  }, [dark]);
+  return [dark, () => setDark(d=>!d)];
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+function Toast({ msg, type }) {
+  const bg = type==="success"?"var(--green)":type==="error"?"var(--red)":"var(--primary)";
+  return (
+    React.createElement('div', { className: "toast-anim", style: {position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",background:bg,color:"#fff",borderRadius:12,padding:"10px 22px",fontSize:14,fontWeight:700,zIndex:9999,pointerEvents:"none",boxShadow:"0 6px 32px rgba(0,0,0,0.22)",whiteSpace:"nowrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 211}}
+      , msg
+    )
+  );
+}
+
+// ─── SPACED REP CHART ────────────────────────────────────────────────────────
+function SpacedRepChart({ decks }) {
+  const data = useMemo(() => {
+    const now = Date.now();
+    const days = {};
+    for (let i=0;i<14;i++) {
+      const d = new Date(now + i*86400000);
+      days[d.toISOString().slice(0,10)] = 0;
+    }
+    decks.forEach(deck => deck.cards.forEach(c => {
+      const k = new Date(c.nextReview).toISOString().slice(0,10);
+      if (days[k] !== undefined) days[k]++;
+    }));
+    return Object.entries(days).map(([date,count]) => ({
+      date, count,
+      label: new Date(date).toLocaleDateString("ar-EG",{weekday:"short",month:"short",day:"numeric"})
+    }));
+  }, [decks]);
+
+  const max = Math.max(...data.map(d=>d.count), 1);
+  const today = new Date().toISOString().slice(0,10);
+
+  return (
+    React.createElement('div', { style: {background:"var(--surface2)",borderRadius:16,padding:"16px 14px",marginBottom:12,border:"1.5px solid var(--border)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 240}}
+      , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)",fontWeight:700,letterSpacing:1.2,marginBottom:12,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 241}}, "📅 جدول التكرار المتباعد — 14 يوم"      )
+      , React.createElement('div', { style: {display:"flex",gap:4,alignItems:"flex-end",height:70}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 242}}
+        , data.map(({date,count,label}) => {
+          const h = Math.max(count ? (count/max)*60 : 3, count?8:3);
+          const isToday = date === today;
+          return (
+            React.createElement('div', { key: date, style: {flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:"default"}, title: `${label}: ${count} بطاقة`, __self: this, __source: {fileName: _jsxFileName, lineNumber: 247}}
+              , React.createElement('div', { style: {fontSize:10,color:"var(--textmute)",fontWeight:600,opacity:count?1:0.4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 248}}, count||"")
+              , React.createElement('div', { style: {width:"100%",height:h,borderRadius:4,background:isToday?"var(--accent)":count>0?"var(--primary)":"var(--border)",transition:"height 0.4s cubic-bezier(.34,1.56,.64,1)",opacity:isToday?1:count?0.85:0.35,position:"relative"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 249}}
+                , isToday && React.createElement('div', { style: {position:"absolute",inset:0,borderRadius:4,background:"var(--accent)",animation:"glow-pulse 2s ease infinite"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 250}})
+              )
+              , React.createElement('div', { style: {fontSize:9,color:isToday?"var(--accent)":"var(--textmute)",fontWeight:isToday?800:400,transform:"rotate(-40deg)",transformOrigin:"top center",whiteSpace:"nowrap",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 252}}
+                , new Date(date).toLocaleDateString("ar-EG",{month:"numeric",day:"numeric"})
+              )
+            )
+          );
+        })
+      )
+    )
+  );
+}
+
+// ─── STREAK BADGE ─────────────────────────────────────────────────────────────
+function StreakBadge({ streak }) {
+  if (!streak) return null;
+  return (
+    React.createElement('div', { style: {display:"flex",alignItems:"center",gap:5,background:"var(--amber)",borderRadius:999,padding:"3px 10px",fontSize:12,fontWeight:800,color:"#7a4700"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 267}}, "🔥 "
+       , streak, " يوم"
+    )
+  );
+}
+
+// ─── CONFIRM MODAL ───────────────────────────────────────────────────────────
+function ConfirmModal({ msg, onOk, onCancel }) {
+  return (
+    React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 276}}
+      , React.createElement('div', { className: "pop", style: {background:"var(--surface)",borderRadius:20,padding:28,maxWidth:320,width:"100%",textAlign:"center",boxShadow:"var(--shadow2)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 277}}
+        , React.createElement('div', { style: {fontSize:22,marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 278}}, "⚠️")
+        , React.createElement('div', { style: {fontSize:15,fontWeight:600,marginBottom:20,lineHeight:1.6,color:"var(--text)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 279}}, msg)
+        , React.createElement('div', { style: {display:"flex",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 280}}
+          , React.createElement('button', { onClick: onOk, style: {flex:1,padding:"11px",borderRadius:12,border:"none",background:"var(--red)",color:"#fff",fontFamily:"var(--font)",fontWeight:700,fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 281}}, "حذف")
+          , React.createElement('button', { onClick: onCancel, style: {flex:1,padding:"11px",borderRadius:12,border:"1.5px solid var(--border)",background:"none",color:"var(--textsub)",fontFamily:"var(--font)",fontWeight:700,fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 282}}, "إلغاء")
+        )
+      )
+    )
+  );
+}
+
+// ─── EXIT CONFIRM ────────────────────────────────────────────────────────────
+function ExitConfirmModal({ onOk, onCancel }) {
+  return (
+    React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 292}}
+      , React.createElement('div', { className: "pop", style: {background:"var(--surface)",borderRadius:20,padding:28,maxWidth:320,width:"100%",textAlign:"center",boxShadow:"var(--shadow2)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 293}}
+        , React.createElement('div', { style: {fontSize:28,marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 294}}, "🚪")
+        , React.createElement('div', { style: {fontSize:15,fontWeight:700,marginBottom:8,color:"var(--text)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 295}}, "هل تريد الخروج؟"  )
+        , React.createElement('div', { style: {fontSize:13,color:"var(--textsub)",marginBottom:20,lineHeight:1.6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 296}}, "تقدمك محفوظ حتى الآن. ستُحتسب البطاقات التي راجعتها."       )
+        , React.createElement('div', { style: {display:"flex",gap:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 297}}
+          , React.createElement('button', { onClick: onOk, style: {flex:1,padding:"11px",borderRadius:12,border:"none",background:"var(--primary)",color:"#fff",fontFamily:"var(--font)",fontWeight:700,fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 298}}, "خروج")
+          , React.createElement('button', { onClick: onCancel, style: {flex:1,padding:"11px",borderRadius:12,border:"1.5px solid var(--border)",background:"none",color:"var(--textsub)",fontFamily:"var(--font)",fontWeight:700,fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 299}}, "استمرار")
+        )
+      )
+    )
+  );
+}
+
+// ─── CARD PREVIEW MODAL ──────────────────────────────────────────────────────
+function CardPreviewModal({ card, onClose, onDelete }) {
+  return (
+    React.createElement('div', { style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}, onClick: onClose, __self: this, __source: {fileName: _jsxFileName, lineNumber: 309}}
+      , React.createElement('div', { className: "pop", style: {background:"var(--surface)",borderRadius:20,padding:24,maxWidth:420,width:"100%",boxShadow:"var(--shadow2)"}, onClick: e=>e.stopPropagation(), __self: this, __source: {fileName: _jsxFileName, lineNumber: 310}}
+        , React.createElement('div', { style: {fontSize:10,color:"var(--textmute)",letterSpacing:1.2,marginBottom:8,fontWeight:700,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 311}}, "السؤال")
+        , React.createElement('div', { style: {fontSize:15,fontWeight:700,marginBottom:14,color:"var(--text)",lineHeight:1.6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 312}}, card.front)
+        , React.createElement('div', { style: {height:1.5,background:"var(--border)",marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 313}})
+        , React.createElement('div', { style: {fontSize:10,color:"var(--textmute)",letterSpacing:1.2,marginBottom:8,fontWeight:700,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 314}}, "الإجابة")
+        , React.createElement('div', { style: {fontSize:13,color:"var(--textsub)",lineHeight:1.8,marginBottom:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 315}}, card.back)
+        , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:"1px solid var(--border)",paddingTop:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 316}}
+          , React.createElement('div', { style: {display:"flex",gap:8,fontSize:11,color:"var(--textmute)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 317}}
+            , React.createElement('span', { style: {background:"var(--surface2)",borderRadius:8,padding:"3px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 318}}, "📊 EF: "  , _optionalChain([card, 'access', _ => _.easeFactor, 'optionalAccess', _2 => _2.toFixed, 'call', _3 => _3(1)]))
+            , React.createElement('span', { style: {background:"var(--surface2)",borderRadius:8,padding:"3px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 319}}, "🔄 " , card.repetitions, " مرة" )
+            , React.createElement('span', { style: {background:"var(--surface2)",borderRadius:8,padding:"3px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 320}}, "⏭ " , nextReviewLabel(card.nextReview))
+          )
+          , React.createElement('button', { onClick: onDelete, style: {padding:"6px 14px",borderRadius:10,border:"none",background:"var(--badge-hard)",color:"var(--badge-hard-t)",fontFamily:"var(--font)",fontWeight:700,fontSize:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 322}}, "🗑 حذف" )
+        )
+        , React.createElement('button', { onClick: onClose, style: {position:"absolute",top:16,left:16,background:"none",border:"none",color:"var(--textmute)",fontSize:18,lineHeight:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 324}}, "✕")
+      )
+    )
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const [dark, toggleTheme] = useTheme();
+  const [decks, setDecksRaw] = useState(SEED_DECKS);
+  const [history, setHistory] = useState([]); // array of timestamps
+  const [view, setView] = useState("home");
+  const [currentDeck, setCurrentDeck] = useState(null);
+  const [queue, setQueue] = useState([]);
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [newCard, setNewCard] = useState({front:"",back:""});
+  const [newDeckName, setNewDeckName] = useState("");
+  const [showAddDeck, setShowAddDeck] = useState(false);
+  const [stats, setStats] = useState({reviewed:0,correct:0,easy:0,hard:0});
+  const [justAdded, setJustAdded] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // {type:"deck"|"card", id, deckId?}
+  const [previewCard, setPreviewCard] = useState(null);
+  const [showExit, setShowExit] = useState(false);
+  const [cardAnim, setCardAnim] = useState(0);
+
+  const showToast = useCallback((msg, type="success") => {
+    setToast({msg,type});
+    setTimeout(()=>setToast(null), 2200);
+  }, []);
+
+  // Load
+  useEffect(() => {
+    const saved = loadAll();
+    if (saved) {
+      if (saved.decks) setDecksRaw(mergeDecks(saved));
+      else setDecksRaw(mergeDecks(saved)); // legacy
+      if (saved.history) setHistory(saved.history);
+    }
+    setLoaded(true);
+  }, []);
+
+  // Save
+  const setDecks = useCallback((val) => {
+    setDecksRaw(prev => {
+      const next = typeof val === "function" ? val(prev) : val;
+      setHistory(h => {
+        const newH = [...h, Date.now()].slice(-500);
+        saveAll({ decks: next.map(d=>({id:d.id,cards:d.cards.map(c=>({id:c.id,easeFactor:c.easeFactor,interval:c.interval,repetitions:c.repetitions,nextReview:c.nextReview,lastReviewed:c.lastReviewed,front:c.deckId?c.front:undefined,back:c.deckId?c.back:undefined}))})), history: newH });
+        return newH;
+      });
+      return next;
+    });
+  }, []);
+
+  const saveHistory = useCallback((h) => {
+    setHistory(h);
+    setDecksRaw(prev => {
+      saveAll({ decks: prev.map(d=>({id:d.id,cards:d.cards.map(c=>({id:c.id,easeFactor:c.easeFactor,interval:c.interval,repetitions:c.repetitions,nextReview:c.nextReview,lastReviewed:c.lastReviewed}))})), history: h });
+      return prev;
+    });
+  }, []);
+
+  const due = useMemo(() => getDueCards(decks), [decks]);
+  const total = useMemo(() => decks.reduce((s,d)=>s+d.cards.length,0), [decks]);
+  const mastered = useMemo(() => decks.reduce((s,d)=>s+d.cards.filter(c=>c.repetitions>=3).length,0), [decks]);
+  const streak = useMemo(() => getStreak(history), [history]);
+
+  const sortedDecks = useMemo(() => [...decks].sort((a,b) => {
+    const ad = a.cards.filter(c=>c.nextReview<=Date.now()).length;
+    const bd = b.cards.filter(c=>c.nextReview<=Date.now()).length;
+    return bd - ad;
+  }), [decks]);
+
+  function startStudy(deck) {
+    const q = deck ? deck.cards.filter(c=>c.nextReview<=Date.now()) : due;
+    if (!q.length) return;
+    const shuffled = [...q].sort(()=>Math.random()-0.5);
+    setQueue(shuffled); setIdx(0); setFlipped(false);
+    setStats({reviewed:0,correct:0,easy:0,hard:0});
+    setCurrentDeck(deck||null); setView("study");
+  }
+
+  function handleRate(quality) {
+    const card = queue[idx];
+    const updated = sm2(card, quality);
+    setDecks(prev => prev.map(d => ({...d, cards:d.cards.map(c=>c.id===card.id?updated:c)})));
+    const newH = [...history, Date.now()].slice(-500);
+    saveHistory(newH);
+    setStats(s => ({
+      reviewed:s.reviewed+1,
+      correct:quality>=3?s.correct+1:s.correct,
+      easy:quality>=5?s.easy+1:s.easy,
+      hard:quality<3?s.hard+1:s.hard
+    }));
+    if (idx+1 < queue.length) {
+      setCardAnim(n=>n+1);
+      setTimeout(()=>{setIdx(i=>i+1); setFlipped(false);}, 60);
+    } else {
+      setView("done");
+    }
+  }
+
+  function addCard() {
+    if (!newCard.front.trim()||!newCard.back.trim()||!currentDeck) return;
+    const card = mk(`custom_${Date.now()}`, newCard.front, newCard.back);
+    setDecks(prev=>prev.map(d=>d.id===currentDeck.id?{...d,cards:[...d.cards,card]}:d));
+    setNewCard({front:"",back:""}); setJustAdded(true);
+    setTimeout(()=>setJustAdded(false),2000);
+    showToast("✓ حُفظت البطاقة");
+  }
+
+  function addDeck() {
+    if (!newDeckName.trim()) return;
+    const emojis = ["📚","🎯","💡","🌟","⚡","🧩","🔥","💎"];
+    const colors = ["var(--primary)","var(--accent)","var(--green)","var(--amber)"];
+    setDecks(prev=>[...prev,{id:`custom_${Date.now()}`,title:newDeckName,emoji:emojis[Math.floor(Math.random()*emojis.length)],color:colors[Math.floor(Math.random()*colors.length)],desc:"حزمة مخصصة",cards:[]}]);
+    setNewDeckName(""); setShowAddDeck(false);
+    showToast("✓ أُضيفت الحزمة");
+  }
+
+  function deleteDeck(deckId) {
+    setDecks(prev=>prev.filter(d=>d.id!==deckId));
+    showToast("🗑 حُذفت الحزمة","error");
+    setConfirmDelete(null);
+  }
+
+  function deleteCard(deckId, cardId) {
+    setDecks(prev=>prev.map(d=>d.id===deckId?{...d,cards:d.cards.filter(c=>c.id!==cardId)}:d));
+    showToast("🗑 حُذفت البطاقة","error");
+    setConfirmDelete(null); setPreviewCard(null);
+  }
+
+  // ─── LOADING ────────────────────────────────────────────────────────────────
+  if (!loaded) return (
+    React.createElement('div', { style: {minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,background:"var(--bg)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 461}}
+      , React.createElement('div', { style: {fontSize:52,animation:"pulse 1.2s ease infinite"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 462}}, "🧠")
+      , React.createElement('div', { style: {fontSize:16,color:"var(--primary)",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 463}}, "جاري التحميل..." )
+    )
+  );
+
+  // ─── DONE VIEW ──────────────────────────────────────────────────────────────
+  if (view==="done") {
+    const pct = stats.reviewed ? Math.round((stats.correct/stats.reviewed)*100) : 0;
+    const emoji = pct>=80?"🎉":pct>=50?"👍":"💪";
+    return (
+      React.createElement('div', { className: "fade-up", style: {minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center",direction:"rtl"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 472}}
+        , React.createElement('div', { style: {fontSize:64,marginBottom:12,animation:"pop 0.5s ease"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 473}}, emoji)
+        , React.createElement('div', { style: {fontSize:24,fontWeight:900,color:"var(--primary)",marginBottom:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 474}}, "انتهت الجلسة!" )
+        , React.createElement('div', { style: {fontSize:13,color:"var(--textsub)",marginBottom:28}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 475}}, "تقدّمك محفوظ تلقائياً ✓"   )
+        , React.createElement('div', { style: {display:"flex",gap:20,marginBottom:28,background:"var(--surface)",borderRadius:20,padding:"16px 24px",border:"1.5px solid var(--border)",boxShadow:"var(--shadow)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 476}}
+          , [{n:stats.reviewed,l:"راجعتها",c:"var(--primary)"},{n:`${pct}%`,l:"الإتقان",c:pct>=70?"var(--green)":"var(--amber)"},{n:stats.easy,l:"سهلة",c:"var(--green)"},{n:stats.hard,l:"صعبة",c:"var(--red)"}].map((x,i)=>(
+            React.createElement('div', { key: i, style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 478}}
+              , React.createElement('div', { style: {fontSize:26,fontWeight:900,color:x.c}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 479}}, x.n)
+              , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)",marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 480}}, x.l)
+            )
+          ))
+        )
+        , streak>0 && React.createElement('div', { style: {marginBottom:18}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 484}}, React.createElement(StreakBadge, { streak: streak, __self: this, __source: {fileName: _jsxFileName, lineNumber: 484}}))
+        , React.createElement('button', { onClick: ()=>setView("home"), style: {background:"linear-gradient(135deg,var(--primary),var(--primary2))",color:"#fff",border:"none",borderRadius:14,padding:"13px 32px",fontSize:15,fontWeight:700,fontFamily:"var(--font)",boxShadow:"0 4px 20px rgba(108,92,231,0.35)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 485}}, "العودة للرئيسية" )
+      )
+    );
+  }
+
+  // ─── STUDY VIEW ─────────────────────────────────────────────────────────────
+  if (view==="study") {
+    const card = queue[idx];
+    const prog = ((idx)/(queue.length))*100;
+    return (
+      React.createElement('div', { style: {minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",direction:"rtl"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 495}}
+        , showExit && React.createElement(ExitConfirmModal, { onOk: ()=>{setShowExit(false);setView("home");}, onCancel: ()=>setShowExit(false), __self: this, __source: {fileName: _jsxFileName, lineNumber: 496}})
+        /* Header */
+        , React.createElement('div', { style: {background:"var(--surface)",padding:"13px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1.5px solid var(--border)",boxShadow:"var(--shadow)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 498}}
+          , React.createElement('button', { onClick: ()=>setShowExit(true), style: {background:"none",border:"1.5px solid var(--border)",borderRadius:10,color:"var(--textsub)",padding:"7px 13px",fontSize:12,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 499}}, "← رجوع" )
+          , React.createElement('div', { style: {textAlign:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 500}}
+            , React.createElement('div', { style: {fontSize:13,fontWeight:700,color:"var(--text)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 501}}, currentDeck?`${currentDeck.emoji} ${currentDeck.title}`:"مراجعة الكل")
+            , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 502}}, idx+1, " / "  , queue.length)
+          )
+          , React.createElement('div', { style: {width:60}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 504}})
+        )
+        /* Progress */
+        , React.createElement('div', { style: {height:3,background:"var(--border)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 507}}
+          , React.createElement('div', { style: {height:"100%",width:`${prog}%`,background:"linear-gradient(90deg,var(--primary),var(--accent))",transition:"width 0.5s ease",borderRadius:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 508}})
+        )
+        /* Card */
+        , React.createElement('div', { style: {flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"16px 14px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 511}}
+          , React.createElement('div', { key: cardAnim, className: "card-anim", onClick: ()=>setFlipped(f=>!f), style: {width:"100%",maxWidth:480,minHeight:220,background:"var(--card-bg)",border:`2px solid ${flipped?"var(--primary)":"var(--border)"}`,borderRadius:24,padding:"28px 22px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",textAlign:"center",cursor:"pointer",boxShadow:flipped?"var(--shadow2)":"var(--shadow)",transition:"border-color 0.25s, box-shadow 0.25s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 512}}
+            , !flipped ? (
+              React.createElement(React.Fragment, null
+                , React.createElement('div', { style: {fontSize:9,color:"var(--textmute)",letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 515}}, "السؤال")
+                , React.createElement('div', { style: {fontSize:17,lineHeight:1.7,color:"var(--text)",fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 516}}, card.front)
+                , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)",marginTop:20,opacity:0.7}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 517}}, "اضغط لرؤية الإجابة 👆"   )
+              )
+            ) : (
+              React.createElement(React.Fragment, null
+                , React.createElement('div', { style: {fontSize:9,color:"var(--textmute)",letterSpacing:1.5,marginBottom:6,textTransform:"uppercase",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 521}}, "السؤال")
+                , React.createElement('div', { style: {fontSize:15,fontWeight:700,color:"var(--text)",marginBottom:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 522}}, card.front)
+                , React.createElement('div', { style: {width:36,height:2,background:"linear-gradient(90deg,var(--primary),var(--accent))",margin:"8px auto",borderRadius:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 523}})
+                , React.createElement('div', { style: {fontSize:9,color:"var(--textmute)",letterSpacing:1.5,marginBottom:6,textTransform:"uppercase",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 524}}, "الإجابة")
+                , React.createElement('div', { style: {fontSize:13,lineHeight:1.85,color:"var(--textsub)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 525}}, card.back)
+                , React.createElement('div', { style: {marginTop:14,fontSize:11,color:"var(--textmute)",fontFamily:"var(--mono)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 526}}, "التالي: " , nextReviewLabel(card.nextReview), " | EF "   , _optionalChain([card, 'access', _4 => _4.easeFactor, 'optionalAccess', _5 => _5.toFixed, 'call', _6 => _6(1)]))
+              )
+            )
+          )
+        )
+        /* Rating */
+        , flipped && (
+          React.createElement('div', { style: {padding:"10px 14px 22px",display:"flex",gap:8}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 533}}
+            , [
+              {l:"😓 صعب",bg:"var(--badge-hard)",col:"var(--badge-hard-t)",q:1},
+              {l:"🙂 جيد",bg:"var(--badge-ok)",col:"var(--badge-ok-t)",q:3},
+              {l:"⚡ سهل",bg:"var(--badge-easy)",col:"var(--badge-easy-t)",q:5}
+            ].map(({l,bg,col,q})=>(
+              React.createElement('button', { key: q, onClick: ()=>handleRate(q), style: {flex:1,padding:"12px 4px",borderRadius:14,border:"none",fontFamily:"var(--font)",fontWeight:800,fontSize:13,background:bg,color:col,transition:"transform 0.1s",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 539}}
+                , l
+              )
+            ))
+          )
+        )
+      )
+    );
+  }
+
+  // ─── ADD CARD VIEW ──────────────────────────────────────────────────────────
+  if (view==="addCard") {
+    const deck = decks.find(d=>d.id===_optionalChain([currentDeck, 'optionalAccess', _7 => _7.id]));
+    return (
+      React.createElement('div', { style: {minHeight:"100vh",background:"var(--bg)",direction:"rtl"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 553}}
+        , React.createElement('div', { style: {background:"var(--surface)",borderBottom:"1.5px solid var(--border)",padding:"13px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"var(--shadow)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 554}}
+          , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 555}}
+            , React.createElement('div', { style: {fontSize:16,fontWeight:800,color:"var(--primary)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 556}}, "+ بطاقة جديدة"  )
+            , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)",marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 557}}, _optionalChain([currentDeck, 'optionalAccess', _8 => _8.emoji]), " " , _optionalChain([currentDeck, 'optionalAccess', _9 => _9.title]))
+          )
+          , React.createElement('button', { onClick: ()=>setView("home"), style: {background:"none",border:"1.5px solid var(--border)",borderRadius:10,color:"var(--textsub)",padding:"7px 13px",fontSize:12,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 559}}, "← رجوع" )
+        )
+        , React.createElement('div', { style: {padding:16}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 561}}
+          , React.createElement('div', { style: {marginBottom:12}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 562}}
+            , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)",fontWeight:700,letterSpacing:1.2,marginBottom:6,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 563}}, "السؤال")
+            , React.createElement('textarea', { style: {width:"100%",background:"var(--surface)",border:"1.5px solid var(--border)",borderRadius:12,color:"var(--text)",padding:"12px 14px",fontFamily:"var(--font)",fontSize:14,boxSizing:"border-box",resize:"vertical",minHeight:80,direction:"rtl"}, placeholder: "اكتب السؤال هنا..."  , value: newCard.front, onChange: e=>setNewCard(n=>({...n,front:e.target.value})), __self: this, __source: {fileName: _jsxFileName, lineNumber: 564}})
+          )
+          , React.createElement('div', { style: {marginBottom:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 566}}
+            , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)",fontWeight:700,letterSpacing:1.2,marginBottom:6,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 567}}, "الإجابة")
+            , React.createElement('textarea', { style: {width:"100%",background:"var(--surface)",border:"1.5px solid var(--border)",borderRadius:12,color:"var(--text)",padding:"12px 14px",fontFamily:"var(--font)",fontSize:14,boxSizing:"border-box",resize:"vertical",minHeight:110,direction:"rtl"}, placeholder: "اكتب الإجابة هنا..."  , value: newCard.back, onChange: e=>setNewCard(n=>({...n,back:e.target.value})), __self: this, __source: {fileName: _jsxFileName, lineNumber: 568}})
+          )
+          , React.createElement('button', { onClick: addCard, style: {width:"100%",background:"linear-gradient(135deg,var(--primary),var(--primary2))",color:"#fff",border:"none",borderRadius:13,padding:"13px",fontSize:14,fontWeight:700,fontFamily:"var(--font)",boxShadow:"0 4px 18px rgba(108,92,231,0.28)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 570}}, "+ إضافة البطاقة"  )
+          , justAdded&&React.createElement('div', { style: {textAlign:"center",color:"var(--green)",marginTop:10,fontSize:13,fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 571}}, "✓ حُفظت!" )
+        )
+        , React.createElement('div', { style: {padding:"0 16px 16px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 573}}
+          , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)",fontWeight:700,letterSpacing:1.2,marginBottom:10,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 574}}, "البطاقات (" , _optionalChain([deck, 'optionalAccess', _10 => _10.cards, 'access', _11 => _11.length]), ")")
+          , _optionalChain([deck, 'optionalAccess', _12 => _12.cards, 'access', _13 => _13.slice, 'call', _14 => _14(-5), 'access', _15 => _15.reverse, 'call', _16 => _16(), 'access', _17 => _17.map, 'call', _18 => _18(c=>(
+            React.createElement('div', { key: c.id, onClick: ()=>setPreviewCard({...c,_deckId:deck.id}), style: {background:"var(--surface)",border:"1.5px solid var(--border)",borderRadius:12,padding:"10px 14px",marginBottom:7,cursor:"pointer",transition:"border-color 0.2s"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 576}}
+              , React.createElement('div', { style: {fontSize:12,fontWeight:700,color:"var(--text)",marginBottom:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 577}}, c.front)
+              , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 578}}, c.back.slice(0,60), c.back.length>60?"...":"")
+            )
+          ))])
+        )
+        , previewCard && (
+          React.createElement(CardPreviewModal, {
+            card: previewCard,
+            onClose: ()=>setPreviewCard(null),
+            onDelete: ()=>setConfirmDelete({type:"card",id:previewCard.id,deckId:previewCard._deckId}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 583}}
+          )
+        )
+        , confirmDelete && confirmDelete.type==="card" && (
+          React.createElement(ConfirmModal, {
+            msg: "هل تريد حذف هذه البطاقة نهائياً؟"     ,
+            onOk: ()=>deleteCard(confirmDelete.deckId,confirmDelete.id),
+            onCancel: ()=>setConfirmDelete(null), __self: this, __source: {fileName: _jsxFileName, lineNumber: 590}}
+          )
+        )
+      )
+    );
+  }
+
+  // ─── HOME VIEW ──────────────────────────────────────────────────────────────
+  return (
+    React.createElement('div', { style: {minHeight:"100vh",background:"var(--bg)",direction:"rtl"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 602}}
+      , toast && React.createElement(Toast, { msg: toast.msg, type: toast.type, __self: this, __source: {fileName: _jsxFileName, lineNumber: 603}})
+      , confirmDelete && confirmDelete.type==="deck" && (
+        React.createElement(ConfirmModal, {
+          msg: `هل تريد حذف حزمة "${_optionalChain([decks, 'access', _19 => _19.find, 'call', _20 => _20(d=>d.id===confirmDelete.id), 'optionalAccess', _21 => _21.title])}" وجميع بطاقاتها؟`,
+          onOk: ()=>deleteDeck(confirmDelete.id),
+          onCancel: ()=>setConfirmDelete(null), __self: this, __source: {fileName: _jsxFileName, lineNumber: 605}}
+        )
+      )
+      , previewCard && (
+        React.createElement(CardPreviewModal, {
+          card: previewCard,
+          onClose: ()=>setPreviewCard(null),
+          onDelete: ()=>setConfirmDelete({type:"card",id:previewCard.id,deckId:previewCard._deckId}), __self: this, __source: {fileName: _jsxFileName, lineNumber: 612}}
+        )
+      )
+      , confirmDelete && confirmDelete.type==="card" && (
+        React.createElement(ConfirmModal, {
+          msg: "هل تريد حذف هذه البطاقة نهائياً؟"     ,
+          onOk: ()=>deleteCard(confirmDelete.deckId,confirmDelete.id),
+          onCancel: ()=>setConfirmDelete(null), __self: this, __source: {fileName: _jsxFileName, lineNumber: 619}}
+        )
+      )
+
+      /* Header */
+      , React.createElement('div', { style: {background:"var(--surface)",borderBottom:"1.5px solid var(--border)",padding:"13px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"var(--shadow)",position:"sticky",top:0,zIndex:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 627}}
+        , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 628}}
+          , React.createElement('div', { style: {fontSize:19,fontWeight:900,color:"var(--primary)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 629}}, "🧠 ادرس بذكاء"  )
+          , React.createElement('div', { style: {fontSize:10,color:"var(--textmute)",marginTop:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 630}}, "SM-2 · "  , total, " بطاقة" )
+        )
+        , React.createElement('div', { style: {display:"flex",gap:8,alignItems:"center"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 632}}
+          , React.createElement(StreakBadge, { streak: streak, __self: this, __source: {fileName: _jsxFileName, lineNumber: 633}})
+          , React.createElement('button', { onClick: toggleTheme, style: {background:"var(--surface2)",border:"1.5px solid var(--border)",borderRadius:10,color:"var(--textsub)",padding:"7px 11px",fontSize:16,lineHeight:1}, title: "تبديل المظهر" , __self: this, __source: {fileName: _jsxFileName, lineNumber: 634}}
+            , dark?"☀️":"🌙"
+          )
+        )
+      )
+
+      /* Stats Bar */
+      , React.createElement('div', { style: {display:"flex",background:"var(--surface)",borderBottom:"1.5px solid var(--border)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 641}}
+        , [{n:total,l:"إجمالي"},{n:due.length,l:"اليوم"},{n:mastered,l:"متقنة"},{n:decks.length,l:"الحزم"}].map((x,i)=>(
+          React.createElement('div', { key: i, style: {flex:1,textAlign:"center",padding:"11px 6px",borderRight:i<3?"1px solid var(--border)":"none"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 643}}
+            , React.createElement('div', { style: {fontSize:20,fontWeight:900,color:"var(--primary)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 644}}, x.n)
+            , React.createElement('div', { style: {fontSize:9,color:"var(--textmute)",marginTop:2,fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 645}}, x.l)
+          )
+        ))
+      )
+
+      , React.createElement('div', { style: {padding:"14px 14px 8px"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 650}}
+
+        /* Due Alert */
+        , due.length>0 ? (
+          React.createElement('div', { className: "fade-up", style: {background:"linear-gradient(135deg,rgba(108,92,231,0.13),rgba(253,121,168,0.1))",border:"1.5px solid var(--border2)",borderRadius:18,padding:"16px 18px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"var(--shadow)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 654}}
+            , React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 655}}
+              , React.createElement('div', { style: {fontSize:36,fontWeight:900,background:"linear-gradient(135deg,var(--primary),var(--accent))",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 656}}, due.length)
+              , React.createElement('div', { style: {fontSize:12,color:"var(--textsub)",fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 657}}, "بطاقة تنتظرك" )
+              , due.length>=MAX_DAILY&&React.createElement('div', { style: {fontSize:10,color:"var(--amber)",marginTop:3}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 658}}, "⚠ وصلت الحد اليومي ("    , MAX_DAILY, ")")
+            )
+            , React.createElement('button', { onClick: ()=>startStudy(null), style: {background:"linear-gradient(135deg,var(--primary),var(--primary2))",color:"#fff",border:"none",borderRadius:13,padding:"11px 18px",fontSize:13,fontWeight:800,fontFamily:"var(--font)",boxShadow:"0 4px 18px rgba(108,92,231,0.3)",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 660}}, "مراجعة الكل ←"
+
+            )
+          )
+        ) : (
+          React.createElement('div', { style: {background:"var(--surface)",border:"1.5px solid var(--border)",borderRadius:18,padding:"16px",marginBottom:14,textAlign:"center",boxShadow:"var(--shadow)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 665}}
+            , React.createElement('div', { style: {fontSize:28,marginBottom:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 666}}, "✅")
+            , React.createElement('div', { style: {fontWeight:800,color:"var(--green)",fontSize:14}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 667}}, "أنجزت مراجعة اليوم!"  )
+            , React.createElement('div', { style: {fontSize:11,color:"var(--textmute)",marginTop:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 668}}, "عُد غداً للاستمرار"  )
+          )
+        )
+
+        /* Spaced Rep Chart */
+        , React.createElement(SpacedRepChart, { decks: decks, __self: this, __source: {fileName: _jsxFileName, lineNumber: 673}})
+
+        /* Decks */
+        , React.createElement('div', { style: {fontSize:10,color:"var(--textmute)",fontWeight:700,letterSpacing:1.2,marginBottom:10,marginTop:4,textTransform:"uppercase"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 676}}, "الحزم (" , decks.length, ")")
+
+        , sortedDecks.map((deck,di) => {
+          const dueCount = deck.cards.filter(c=>c.nextReview<=Date.now()).length;
+          const masteredCount = deck.cards.filter(c=>c.repetitions>=3).length;
+          const pct = deck.cards.length>0 ? Math.round((masteredCount/deck.cards.length)*100) : 0;
+          return (
+            React.createElement('div', { key: deck.id, className: "fade-up", style: {background:"var(--surface)",border:"1.5px solid var(--border)",borderRadius:16,padding:"13px 15px",marginBottom:9,boxShadow:"var(--shadow)",animationDelay:`${di*0.04}s`}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 683}}
+              , React.createElement('div', { style: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 684}}
+                , React.createElement('div', { style: {display:"flex",gap:11,alignItems:"flex-start",flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 685}}
+                  , React.createElement('div', { style: {fontSize:24,marginTop:2}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 686}}, deck.emoji)
+                  , React.createElement('div', { style: {flex:1}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 687}}
+                    , React.createElement('div', { style: {fontSize:14,fontWeight:800,color:"var(--text)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 688}}, deck.title)
+                    , deck.desc&&React.createElement('div', { style: {fontSize:11,color:"var(--textmute)",marginTop:2,lineHeight:1.4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 689}}, deck.desc)
+                    , React.createElement('div', { style: {display:"flex",gap:8,marginTop:5,flexWrap:"wrap"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 690}}
+                      , React.createElement('span', { style: {fontSize:11,color:"var(--textmute)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 691}}, deck.cards.length, " بطاقة" )
+                      , dueCount>0&&React.createElement('span', { style: {fontSize:11,color:"var(--primary)",fontWeight:700}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 692}}, "• " , dueCount, " للمراجعة" )
+                      , masteredCount>0&&React.createElement('span', { style: {fontSize:11,color:"var(--green)",fontWeight:600}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 693}}, "• " , pct, "% متقن" )
+                    )
+                  )
+                )
+                , React.createElement('div', { style: {display:"flex",gap:5,flexShrink:0,marginRight:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 697}}
+                  , dueCount>0 && (
+                    React.createElement('button', { onClick: ()=>startStudy(deck), style: {background:"linear-gradient(135deg,var(--primary),var(--primary2))",color:"#fff",border:"none",borderRadius:10,padding:"6px 11px",fontSize:11,fontWeight:800,fontFamily:"var(--font)",boxShadow:"0 2px 10px rgba(108,92,231,0.22)",cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 699}}, "مراجعة"
+
+                    )
+                  )
+                  , React.createElement('button', { onClick: ()=>{setCurrentDeck(deck);setView("addCard");}, style: {background:"none",border:"1.5px solid var(--border)",borderRadius:10,color:"var(--textsub)",padding:"6px 10px",fontSize:13,fontWeight:700,cursor:"pointer"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 703}}, "+")
+                  , React.createElement('button', { onClick: ()=>setConfirmDelete({type:"deck",id:deck.id}), style: {background:"none",border:"1.5px solid var(--border)",borderRadius:10,color:"var(--red)",padding:"6px 9px",fontSize:12,cursor:"pointer"}, title: "حذف الحزمة" , __self: this, __source: {fileName: _jsxFileName, lineNumber: 704}}, "🗑")
+                )
+              )
+              , deck.cards.length>0 && (
+                React.createElement('div', { style: {marginTop:10,height:4,background:"var(--border)",borderRadius:4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 708}}
+                  , React.createElement('div', { style: {height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,var(--primary),var(--accent))`,borderRadius:4,transition:"width 0.5s cubic-bezier(.34,1.56,.64,1)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 709}})
+                )
+              )
+            )
+          );
+        })
+
+        /* Add Deck */
+        , showAddDeck ? (
+          React.createElement('div', { style: {background:"var(--surface)",border:"1.5px solid var(--border)",borderRadius:16,padding:"14px",marginTop:6}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 718}}
+            , React.createElement('input', { style: {width:"100%",background:"var(--surface2)",border:"1.5px solid var(--border)",borderRadius:10,color:"var(--text)",padding:"11px 13px",fontFamily:"var(--font)",fontSize:14,boxSizing:"border-box",direction:"rtl"}, placeholder: "اسم الحزمة الجديدة..."  , value: newDeckName, onChange: e=>setNewDeckName(e.target.value), onKeyDown: e=>e.key==="Enter"&&addDeck(), __self: this, __source: {fileName: _jsxFileName, lineNumber: 719}})
+            , React.createElement('div', { style: {display:"flex",gap:8,marginTop:10}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 720}}
+              , React.createElement('button', { onClick: addDeck, style: {flex:1,background:"linear-gradient(135deg,var(--primary),var(--primary2))",color:"#fff",border:"none",borderRadius:11,padding:"11px",fontSize:14,fontWeight:700,fontFamily:"var(--font)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 721}}, "إضافة")
+              , React.createElement('button', { onClick: ()=>setShowAddDeck(false), style: {flex:1,background:"none",border:"1.5px solid var(--border)",borderRadius:11,color:"var(--textsub)",padding:"11px",fontSize:14,fontWeight:700,fontFamily:"var(--font)"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 722}}, "إلغاء")
+            )
+          )
+        ) : (
+          React.createElement('button', { onClick: ()=>setShowAddDeck(true), style: {width:"100%",marginTop:4,padding:"13px",background:"none",border:"1.5px dashed var(--border2)",borderRadius:16,color:"var(--textmute)",fontSize:13,fontWeight:700,fontFamily:"var(--font)",cursor:"pointer",boxSizing:"border-box"}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 726}}, "+ حزمة جديدة"
+
+          )
+        )
+
+        , React.createElement('div', { style: {height:32}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 731}})
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App, {__self: this, __source: {fileName: _jsxFileName, lineNumber: 737}}));
+
+</script>
+</body>
+</html>
