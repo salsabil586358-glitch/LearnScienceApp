@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.salsabil586358_glitch.twa",
+        "sha256_cert_fingerprints": ["73:5B:6F:DA:5C:2B:14:2B:5E:70:D2:D5:31:21:F9:7C:A0:82:48:81:ED:49:88:BB:C3:3A:AD:DE:DC:EE:F2:7C"]
+      }
+    }]
